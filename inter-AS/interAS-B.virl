@@ -6,10 +6,20 @@
     <node name="A-PE1" type="SIMPLE" subtype="IOS XRv" location="188,177">
         <extensions>
             <entry key="config" type="String">!! IOS XR Configuration 6.1.3
-!! Last configuration change at Mon Sep  7 14:50:48 2020 by cisco
+!! Last configuration change at Tue Sep  8 23:03:08 2020 by cisco
 !
 hostname A-PE1
 cdp
+vrf A-CLI
+ address-family ipv4 unicast
+  import route-target
+   1:100
+  !
+  export route-target
+   1:100
+  !
+ !
+!
 interface Loopback0
  description signaling
  ipv4 address 10.0.1.1 255.255.255.255
@@ -28,7 +38,14 @@ interface GigabitEthernet0/0/0/1
  ipv4 address 10.0.0.2 255.255.255.254
 !
 interface GigabitEthernet0/0/0/2
- shutdown
+ description A-CLI1@Gi0/1
+ cdp
+ vrf A-CLI
+ ipv4 address 172.16.1.0 255.255.255.254
+!
+route-policy PASS
+  pass
+end-policy
 !
 router ospf bbip
  router-id 10.0.1.1
@@ -65,6 +82,20 @@ router bgp 1
   use neighbor-group A-RR
   description A-RR
  !
+ vrf A-CLI
+  rd 1:100
+  address-family ipv4 unicast
+   redistribute connected
+  !
+  neighbor 172.16.1.1
+   remote-as 65521
+   description A-CLI1
+   address-family ipv4 unicast
+    route-policy PASS in
+    route-policy PASS out
+   !
+  !
+ !
 !
 mpls ldp
  router-id 10.0.1.1
@@ -84,7 +115,7 @@ end
     <node name="A-PE3" type="SIMPLE" subtype="IOS XRv" location="302,277">
         <extensions>
             <entry key="config" type="String">!! IOS XR Configuration 6.1.3
-!! Last configuration change at Mon Sep  7 17:38:20 2020 by cisco
+!! Last configuration change at Tue Sep  8 13:57:01 2020 by CVAC
 !
 hostname A-PE3
 cdp
@@ -203,7 +234,7 @@ end
     <node name="A-PE2" type="SIMPLE" subtype="IOS XRv" location="302,63">
         <extensions>
             <entry key="config" type="String">!! IOS XR Configuration 6.1.3
-!! Last configuration change at Mon Sep  7 12:35:58 2020 by CVAC
+!! Last configuration change at Tue Sep  8 13:56:52 2020 by CVAC
 !
 hostname A-PE2
 cdp
@@ -287,7 +318,7 @@ end
     <node name="A-ASBR" type="SIMPLE" subtype="IOS XRv" location="415,177">
         <extensions>
             <entry key="config" type="String">!! IOS XR Configuration 6.1.3
-!! Last configuration change at Mon Sep  7 21:08:14 2020 by cisco
+!! Last configuration change at Tue Sep  8 13:56:51 2020 by CVAC
 !
 hostname A-ASBR
 cdp
@@ -386,7 +417,7 @@ end
     <node name="B-ASBR" type="SIMPLE" subtype="IOS XRv" location="550,177" excludeFromLaunch="true">
         <extensions>
             <entry key="config" type="String">!! IOS XR Configuration 6.1.3
-!! Last configuration change at Mon Sep  7 20:58:21 2020 by cisco
+!! Last configuration change at Tue Sep  8 23:14:47 2020 by cisco
 !
 hostname B-ASBR
 cdp
@@ -412,8 +443,23 @@ interface GigabitEthernet0/0/0/2
  cdp
  ipv4 address 10.0.0.13 255.255.255.254
 !
+extcommunity-set rt A-CLI
+  2:100
+end-set
+!
+extcommunity-set rt from-PA
+  1:100
+end-set
+!
 route-policy PASS
   pass
+end-policy
+!
+route-policy RT-adapter
+  if extcommunity rt matches-any from-PA then
+    delete extcommunity rt all
+    set extcommunity rt A-CLI
+  endif
 end-policy
 !
 router static
@@ -461,7 +507,7 @@ router bgp 2
  neighbor 10.0.0.16
   remote-as 1
   address-family vpnv4 unicast
-   route-policy PASS in
+   route-policy RT-adapter in
    route-policy PASS out
    soft-reconfiguration inbound always
   !
@@ -485,7 +531,7 @@ end
     <node name="B-PE3" type="SIMPLE" subtype="IOS XRv" location="663,277" excludeFromLaunch="true">
         <extensions>
             <entry key="config" type="String">!! IOS XR Configuration 6.1.3
-!! Last configuration change at Mon Sep  7 20:34:45 2020 by cisco
+!! Last configuration change at Tue Sep  8 15:17:14 2020 by CVAC
 !
 hostname B-PE3
 cdp
@@ -604,7 +650,7 @@ end
     <node name="B-PE2" type="SIMPLE" subtype="IOS XRv" location="663,69" excludeFromLaunch="true">
         <extensions>
             <entry key="config" type="String">!! IOS XR Configuration 6.1.3
-!! Last configuration change at Mon Sep  7 14:22:18 2020 by CVAC
+!! Last configuration change at Tue Sep  8 15:17:10 2020 by CVAC
 !
 hostname B-PE2
 cdp
@@ -688,10 +734,20 @@ end
     <node name="B-PE1" type="SIMPLE" subtype="IOS XRv" location="777,177" excludeFromLaunch="true">
         <extensions>
             <entry key="config" type="String">!! IOS XR Configuration 6.1.3
-!! Last configuration change at Mon Sep  7 14:22:15 2020 by CVAC
+!! Last configuration change at Tue Sep  8 22:52:17 2020 by cisco
 !
 hostname B-PE1
 cdp
+vrf A-CLI
+ address-family ipv4 unicast
+  import route-target
+   2:100
+  !
+  export route-target
+   2:100
+  !
+ !
+!
 vrf B-CLI
  address-family ipv4 unicast
   import route-target
@@ -720,7 +776,10 @@ interface GigabitEthernet0/0/0/1
  ipv4 address 10.0.0.2 255.255.255.254
 !
 interface GigabitEthernet0/0/0/2
- shutdown
+ description A-CLI2@Gi0/1
+ cdp
+ vrf A-CLI
+ ipv4 address 172.16.1.2 255.255.255.254
 !
 interface GigabitEthernet0/0/0/3
  description B-CLI3
@@ -766,6 +825,20 @@ router bgp 2
   use neighbor-group B-RR
   description B-RR
  !
+ vrf A-CLI
+  rd 2:100
+  address-family ipv4 unicast
+   redistribute connected
+  !
+  neighbor 172.16.1.3
+   remote-as 65522
+   description A-CLI
+   address-family ipv4 unicast
+    route-policy PASS in
+    route-policy PASS out
+   !
+  !
+ !
  vrf B-CLI
   rd 2:200
   address-family ipv4 unicast
@@ -800,7 +873,7 @@ end
     <node name="A-RR" type="SIMPLE" subtype="IOSv" location="301,171">
         <extensions>
             <entry key="config" type="String">!
-! Last configuration change at 23:50:25 UTC Mon Sep 7 2020
+! Last configuration change at 22:48:18 UTC Tue Sep 8 2020
 !
 version 15.7
 service timestamps debug datetime msec
@@ -863,7 +936,7 @@ interface Loopback0
  ip address 10.0.1.4 255.255.255.255
 !
 interface GigabitEthernet0/0
- ip address 192.168.101.80 255.255.255.0
+ ip address 192.168.101.95 255.255.255.0
  shutdown
  duplex auto
  speed auto
@@ -986,7 +1059,7 @@ end
     <node name="B-RR" type="SIMPLE" subtype="IOSv" location="664,178" excludeFromLaunch="true">
         <extensions>
             <entry key="config" type="String">!
-! Last configuration change at 23:55:01 UTC Mon Sep 7 2020
+! Last configuration change at 22:49:51 UTC Tue Sep 8 2020
 !
 version 15.7
 service timestamps debug datetime msec
@@ -1049,7 +1122,7 @@ interface Loopback0
  ip address 10.0.2.4 255.255.255.255
 !
 interface GigabitEthernet0/0
- ip address 192.168.101.85 255.255.255.0
+ ip address 192.168.101.102 255.255.255.0
  shutdown
  duplex auto
  speed auto
@@ -1170,20 +1243,16 @@ end
         <interface id="1" name="GigabitEthernet0/2"/>
     </node>
     <node name="A-CLI1" type="SIMPLE" subtype="IOSv" location="99,178" excludeFromLaunch="true">
-        <interface id="0" name="GigabitEthernet0/1"/>
-        <interface id="1" name="GigabitEthernet0/2"/>
-    </node>
-    <node name="B-CLI1" type="SIMPLE" subtype="IOSv" location="301,365" excludeFromLaunch="true">
         <extensions>
             <entry key="config" type="String">!
-! Last configuration change at 23:55:23 UTC Mon Sep 7 2020
+! Last configuration change at 22:49:11 UTC Tue Sep 8 2020
 !
 version 15.7
 service timestamps debug datetime msec
 service timestamps log datetime msec
 no service password-encryption
 !
-hostname B-CLI1
+hostname A-CLI1
 !
 boot-start-marker
 boot-end-marker
@@ -1236,6 +1305,159 @@ redundancy
 !
 interface GigabitEthernet0/0
  no ip address
+ shutdown
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/1
+ ip address 172.16.1.1 255.255.255.254
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/2
+ description LAN
+ ip address 192.168.1.1 255.255.255.0
+ duplex auto
+ speed auto
+ media-type rj45
+!
+router bgp 65521
+ bgp log-neighbor-changes
+ neighbor 172.16.1.0 remote-as 1
+ neighbor 172.16.1.0 description A-P
+ !
+ address-family ipv4
+  redistribute connected
+  neighbor 172.16.1.0 activate
+ exit-address-family
+!
+ip forward-protocol nd
+!
+!
+no ip http server
+no ip http secure-server
+!
+ipv6 ioam timestamp
+!
+!
+!
+control-plane
+!
+banner exec `
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************`
+banner incoming `
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************`
+banner login `
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************`
+!
+line con 0
+line aux 0
+line vty 0 4
+ login
+ transport input none
+!
+no scheduler allocate
+!
+end
+
+</entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/1"/>
+        <interface id="1" name="GigabitEthernet0/2"/>
+    </node>
+    <node name="B-CLI1" type="SIMPLE" subtype="IOSv" location="301,365" excludeFromLaunch="true">
+        <extensions>
+            <entry key="config" type="String">!
+! Last configuration change at 22:47:36 UTC Tue Sep 8 2020
+!
+version 15.7
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+!
+hostname B-CLI1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+vrf definition mgmt
+ description management
+ !
+ address-family ipv4
+ exit-address-family
+!
+!
+no aaa new-model
+!
+!
+!
+mmi polling-interval 60
+no mmi auto-configure
+no mmi pvc
+mmi snmp-timeout 180
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+ip cef
+no ipv6 cef
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+redundancy
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface GigabitEthernet0/0
+ vrf forwarding mgmt
+ ip address 192.168.101.97 255.255.255.0
  duplex auto
  speed auto
  media-type rj45
@@ -1322,7 +1544,7 @@ end
     <node name="B-CLI2" type="SIMPLE" subtype="IOSv" location="662,363" excludeFromLaunch="true">
         <extensions>
             <entry key="config" type="String">!
-! Last configuration change at 23:55:46 UTC Mon Sep 7 2020
+! Last configuration change at 22:51:43 UTC Tue Sep 8 2020
 !
 version 15.7
 service timestamps debug datetime msec
@@ -1381,7 +1603,7 @@ redundancy
 !
 !
 interface GigabitEthernet0/0
- ip address 192.168.101.87 255.255.255.0
+ ip address 192.168.101.104 255.255.255.0
  shutdown
  duplex auto
  speed auto
@@ -1467,13 +1689,156 @@ end
         <interface id="1" name="GigabitEthernet0/2"/>
     </node>
     <node name="A-CLI2" type="SIMPLE" subtype="IOSv" location="872,176" excludeFromLaunch="true">
+        <extensions>
+            <entry key="config" type="String">!
+! Last configuration change at 22:51:16 UTC Tue Sep 8 2020
+!
+version 15.7
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+!
+hostname A-CLI2
+!
+boot-start-marker
+boot-end-marker
+!
+!
+!
+no aaa new-model
+!
+!
+!
+mmi polling-interval 60
+no mmi auto-configure
+no mmi pvc
+mmi snmp-timeout 180
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+ip cef
+no ipv6 cef
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+redundancy
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface GigabitEthernet0/0
+ no ip address
+ shutdown
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/1
+ description B-P@Gi0/0/0/2
+ ip address 172.16.1.3 255.255.255.254
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/2
+ description LAN
+ ip address 192.168.2.1 255.255.255.0
+ duplex auto
+ speed auto
+ media-type rj45
+!
+router bgp 65522
+ bgp log-neighbor-changes
+ neighbor 172.16.1.2 remote-as 2
+ neighbor 172.16.1.2 description B-P
+ !
+ address-family ipv4
+  redistribute connected
+  neighbor 172.16.1.2 activate
+ exit-address-family
+!
+ip forward-protocol nd
+!
+!
+no ip http server
+no ip http secure-server
+!
+ipv6 ioam timestamp
+!
+!
+!
+control-plane
+!
+banner exec `
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************`
+banner incoming `
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************`
+banner login `
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************`
+!
+line con 0
+line aux 0
+line vty 0 4
+ login
+ transport input none
+!
+no scheduler allocate
+!
+end
+
+</entry>
+        </extensions>
         <interface id="0" name="GigabitEthernet0/1"/>
         <interface id="1" name="GigabitEthernet0/2"/>
     </node>
     <node name="B-CLI3" type="SIMPLE" subtype="IOSv" location="873,234" excludeFromLaunch="true">
         <extensions>
             <entry key="config" type="String">!
-! Last configuration change at 23:54:41 UTC Mon Sep 7 2020
+! Last configuration change at 22:51:00 UTC Tue Sep 8 2020
 !
 version 15.7
 service timestamps debug datetime msec
@@ -1532,7 +1897,7 @@ redundancy
 !
 !
 interface GigabitEthernet0/0
- ip address 192.168.101.88 255.255.255.0
+ ip address 192.168.101.105 255.255.255.0
  shutdown
  duplex auto
  speed auto
