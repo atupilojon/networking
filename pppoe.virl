@@ -6,6 +6,150 @@
     <node name="vBNG" type="SIMPLE" subtype="CSR1000v" location="430,128">
         <extensions>
             <entry key="Auto-generate config" type="Boolean">false</entry>
+            <entry key="config" type="String">!
+! Last configuration change at 08:09:55 UTC Sun Oct 25 2020
+!
+version 16.9
+service timestamps debug datetime msec
+service timestamps log datetime msec
+platform qfp utilization monitor load 80
+no platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname Router
+!
+boot-start-marker
+boot-end-marker
+!
+!
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip admission watch-list expiry-time 0
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+license udi pid CSR1000V sn 968P1OIA6CH
+no license smart enable
+diagnostic bootup level minimal
+!
+spanning-tree extend system-id
+!
+!
+!
+!
+redundancy
+!
+!
+!
+!
+!
+!
+cdp run
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+bba-group pppoe global
+ virtual-template 1
+!
+!
+!
+interface GigabitEthernet1
+ no ip address
+ negotiation auto
+ pppoe enable group global
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description sesionesPPPoe
+ no ip address
+ negotiation auto
+ pppoe enable group global
+ cdp enable
+ no mop enabled
+ no mop sysid
+!
+interface Virtual-Template1
+ ip address 100.64.0.1 255.255.255.0
+ ppp timeout idle 15552000
+!
+ip forward-protocol nd
+no ip http server
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+!
+!
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ stopbits 1
+line vty 0 4
+ login
+!
+!
+!
+!
+!
+!
+end
+
+</entry>
         </extensions>
         <interface id="0" name="GigabitEthernet2"/>
     </node>
